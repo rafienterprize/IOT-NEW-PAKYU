@@ -1,0 +1,45 @@
+{
+  "name": "iot-smart-home-backend",
+  "version": "1.0.0",
+  "description": "Backend server for IoT Smart Home Web Application",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "keywords": [
+    "iot",
+    "smart-home",
+    "esp32",
+    "serial",
+    "socket.io"
+  ],
+  "author": "",
+  "license": "MIT",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@serialport/parser-readline": "^13.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "serialport": "^13.0.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "@types/jest": "^30.0.0",
+    "fast-check": "^4.8.0",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "prisma": "^5.22.0",
+    "supertest": "^7.2.2"
+  }
+}

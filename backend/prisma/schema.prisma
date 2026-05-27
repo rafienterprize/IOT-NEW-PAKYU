@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DeviceLog {
+  id          Int      @id @default(autoincrement())
+  espNumber   Int      // 1, 2, 3, or 4
+  messageType String   // STATUS, GAS, RAIN, RFID, SYSTEM, etc.
+  message     String   @db.Text
+  rawData     String?  @db.Text
+  createdAt   DateTime @default(now())
+  
+  @@index([espNumber, createdAt])
+  @@index([messageType, createdAt])
+  @@map("device_logs")
+}
+
+model DeviceState {
+  id            Int      @id @default(autoincrement())
+  espNumber     Int      @unique
+  isOnline      Boolean  @default(false)
+  lastSeenAt    DateTime @default(now())
+  lampState     String?  // ON, OFF
+  gasValue      Int?
+  rainValue     Int?
+  clotheslinePos String? // IN, OUT
+  doorState     String?  // OPEN, CLOSE
+  gateState     String?  // OPEN, CLOSE
+  wifiStatus    String?  // OK, DISCONNECTED
+  updatedAt     DateTime @updatedAt
+  
+  @@map("device_states")
+}
+
+// TimescaleDB hypertable - must be created manually after migration
+model SensorHistory {
+  id          BigInt   @id @default(autoincrement())
+  espNumber   Int
+  sensorType  String   // GAS, RAIN
+  value       Int
+  timestamp   DateTime @default(now())
+  
+  @@index([espNumber, sensorType, timestamp])
+  @@map("sensor_history")
+}
+
+model RFIDWhitelist {
+  id          Int      @id @default(autoincrement())
+  uid         String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("rfid_whitelist")
+}
+
+model RFIDLog {
+  id          Int      @id @default(autoincrement())
+  uid         String
+  authorized  Boolean
+  espNumber   Int      @default(3)
+  scannedAt   DateTime @default(now())
+  
+  @@index([uid, scannedAt])
+  @@index([authorized, scannedAt])
+  @@map("rfid_logs")
+}
+
+model AutoModeConfig {
+  id              Int      @id @default(autoincrement())
+  enabled         Boolean  @default(false)
+  rainThreshold   Int      @default(1600)
+  lastTriggeredAt DateTime?
+  updatedAt       DateTime @updatedAt
+  
+  @@map("auto_mode_config")
+}
