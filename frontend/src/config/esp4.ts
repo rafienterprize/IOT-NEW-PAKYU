@@ -19,7 +19,12 @@
  *   export const ESP4_BASE_URL = 'http://192.168.1.105';
  *   export const ESP4_BASE_URL = 'http://192.168.4.1';  // AP mode
  */
-export const ESP4_BASE_URL = 'http://192.168.1.100';
+// Use relative URLs when accessing ESP32-4 directly (production)
+// Use localhost when developing with Vite dev server
+export const ESP4_BASE_URL = 
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    ? '' // Production: same origin (ESP32-4)
+    : 'http://localhost:3001'; // Development: Node.js backend
 
 // ---------------------------------------------------------------------------
 // Polling & timeout

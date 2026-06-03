@@ -74,43 +74,80 @@ Sistem IoT Smart Home lengkap dengan ESP32, backend Node.js, dan frontend React 
 
 ---
 
-## 🚀 Quick Start (15 menit)
+## 🚀 Quick Start
 
-### 1️⃣ Clone Repository
+### **MODE 1: Production (ESP32-4 Standalone)** ⭐ **RECOMMENDED**
+
+Website langsung hosted di ESP32-4, tidak perlu Node.js!
+
+#### 1️⃣ Upload ke ESP32-4
 ```bash
-git clone <your-repo-url>
-cd IOT-NEW-PAKYU
+# Buka Arduino IDE
+# File → Open: code iot/esp32-4/esp32-4.ino
+# Tools → Board: ESP32 Dev Module
+# Tools → Port: COM8 (sesuaikan)
+# Tools → Partition: Default 4MB with spiffs
+
+# Upload filesystem (frontend files)
+Tools → ESP32 Sketch Data Upload
+# Tunggu 2-3 menit
+
+# Upload firmware
+Ctrl + U
 ```
 
-### 2️⃣ Upload ESP32 Code
+#### 2️⃣ Dapatkan IP Address
+```bash
+# Open Serial Monitor (115200 baud)
+# Press RESET button on ESP32-4
+# Catat IP address yang muncul:
+# [WIFI] IP Address: 192.168.1.XXX
+```
+
+#### 3️⃣ Akses Website
+```
+http://192.168.1.XXX
+```
+
+🎉 **Done!** Dashboard langsung bisa diakses dari ESP32-4!
+
+**📖 Panduan Lengkap:** Baca [**QUICK_START.md**](QUICK_START.md) untuk detail!
+
+---
+
+### **MODE 2: Development (Vite + Node.js)**
+
+Untuk development frontend dengan hot-reload:
+
+#### 1️⃣ Upload ESP32 Code
 Buka Arduino IDE dan upload:
 - `code iot/esp32-1.ino` → ESP32 #1
 - `code iot/esp32-2.ino` → ESP32 #2
 - `code iot/esp32-3.ino` → ESP32 #3
-- `code iot/esp32-4.ino` → ESP32 #4 ⚠️ **PENTING!**
+- `code iot/esp32-4.ino` → ESP32 #4
 
-**Jangan lupa:** Edit WiFi credentials di ESP32-4
+**Jangan lupa:** Edit WiFi credentials di semua ESP32
 
-### 3️⃣ Setup Backend
+#### 2️⃣ Setup Backend
 ```bash
 cd backend
 npm install
 
 # Edit .env - Ganti SERIAL_PORT dengan port ESP32-4 Anda
-# Windows: COM3, COM4, dll
+# Windows: COM3, COM4, COM8, dll
 # Linux/Mac: /dev/ttyUSB0, /dev/tty.usbserial-0001, dll
 
 npm run dev
 ```
 
-### 4️⃣ Setup Frontend
+#### 3️⃣ Setup Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 5️⃣ Open Browser
+#### 4️⃣ Open Browser
 ```
 http://localhost:5173
 ```
@@ -123,19 +160,22 @@ http://localhost:5173
 
 | Dokumen | Deskripsi |
 |---------|-----------|
-| [**QUICK_START.md**](QUICK_START.md) | 🚀 Panduan setup cepat 15-30 menit |
-| [**CARA_SETUP_IOT.md**](CARA_SETUP_IOT.md) | 📖 Setup detail dengan troubleshooting |
-| [**CARA_HUBUNGKAN_ESP32.md**](CARA_HUBUNGKAN_ESP32.md) | 🔌 **Cara hubungkan ESP32 ke website** |
+| [**QUICK_START.md**](QUICK_START.md) | 🚀 **START HERE!** Panduan deploy ESP32-4 web server |
+| [**PROJECT_STATUS_SUMMARY.md**](PROJECT_STATUS_SUMMARY.md) | 📊 Status proyek lengkap & bugs fixed |
+| [**BUG_REPORT_DAN_FIX.md**](BUG_REPORT_DAN_FIX.md) | 🐛 Bug hardcoded IP & solusinya |
+| [**PANDUAN_UPLOAD_ESP32-4.md**](PANDUAN_UPLOAD_ESP32-4.md) | 📖 Upload detail step-by-step |
+| [**TROUBLESHOOT_ESP32-4_UPLOAD.md**](TROUBLESHOOT_ESP32-4_UPLOAD.md) | 🔧 Solusi error umum saat upload |
+| [**CARA_SETUP_IOT.md**](CARA_SETUP_IOT.md) | 📖 Setup mode development (Node.js) |
 | [**ARSITEKTUR_SISTEM.md**](ARSITEKTUR_SISTEM.md) | 🏗️ Diagram dan alur komunikasi sistem |
-| [**TEST_CHECKLIST.md**](TEST_CHECKLIST.md) | ✅ Checklist testing lengkap step-by-step |
 | [**backend/README.md**](backend/README.md) | 🔧 Backend API documentation |
 | [**frontend/README.md**](frontend/README.md) | 🎨 Frontend documentation |
 
 **Rekomendasi urutan baca:**
-1. **QUICK_START.md** - Baca ini dulu untuk setup cepat
-2. **CARA_SETUP_IOT.md** - Kalau ada masalah, baca ini
-3. **TEST_CHECKLIST.md** - Untuk test semua fitur
-4. **ARSITEKTUR_SISTEM.md** - Untuk memahami cara kerja sistem
+1. **QUICK_START.md** - 🚀 **BACA INI DULU!** Deploy ESP32-4 web server (MODE PRODUCTION)
+2. **PROJECT_STATUS_SUMMARY.md** - Status lengkap & bugs yang sudah diperbaiki
+3. **BUG_REPORT_DAN_FIX.md** - Penjelasan bug hardcoded IP & solusinya
+4. **CARA_SETUP_IOT.md** - Untuk mode development (Vite + Node.js)
+5. **ARSITEKTUR_SISTEM.md** - Untuk memahami cara kerja sistem
 
 ---
 

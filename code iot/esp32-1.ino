@@ -41,7 +41,7 @@
 // WiFi credentials — disesuaikan sesuai instruksi
 // ---------------------------------------------------------------------------
 #define WIFI_SSID     "Wi-Fi"
-#define WIFI_PASSWORD "123456789"
+#define WIFI_PASSWORD "1sampai9"
 
 // ---------------------------------------------------------------------------
 // Pin UART ke ESP4 (TIDAK BERUBAH)
