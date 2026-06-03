@@ -10,12 +10,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
-  },
+  // Tidak ada proxy ke backend — semua request langsung ke ESP32
+  // CORS harus diaktifkan di sketch ESP32 #4
 })
