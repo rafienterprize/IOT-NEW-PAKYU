@@ -1,6 +1,8 @@
 /*
-  ESP32 #4 - WiFi Controller + LED Status + Buzzer + LCD 20x4
-
+  ESP32 #4 - Gateway Controller (Tanpa LCD)
+  
+  Fungsi: Bridge komunikasi antara ESP32 #1, #2, #3 dengan Backend (Node.js)
+  
   SERIAL COMMUNICATION:
   GPIO 16 - RX logs from ESP32 #1
   GPIO 17 - TX WiFi config to ESP32 #1
@@ -11,6 +13,8 @@
   GPIO 2  - RX logs from ESP32 #3
   GPIO 18 - TX WiFi config to ESP32 #3
 
+  USB Serial (GPIO 3/1) - Komunikasi dengan Backend
+
   LED STATUS:
   GPIO 21 - LED ESP32 #1 Status Blue
   GPIO 22 - LED ESP32 #2 Status Green
@@ -20,30 +24,9 @@
   BUZZER & BUTTON:
   GPIO 14 - Startup & Alert Buzzer
   GPIO 0  - Config Button / Boot Button
-
-  LCD I2C 20x4:
-  SDA default ESP32 = GPIO 21
-  SCL default ESP32 = GPIO 22
-
-  PENTING:
-  Karena GPIO 21 dan GPIO 22 di list kamu dipakai LED,
-  kalau tetap pakai LCD I2C default, PIN AKAN BENTROK.
-
-  Solusi di kode ini:
-  - LCD I2C dipindah ke pin custom:
-    SDA = GPIO 27
-    SCL = GPIO 33
-
-  Jadi wiring LCD:
-  VCC -> 5V / VIN
-  GND -> GND
-  SDA -> GPIO 27
-  SCL -> GPIO 33
 */
 
 #include <Arduino.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
 
 // UART ke ESP32 #1
 HardwareSerial ESP1Serial(1);
@@ -51,8 +34,9 @@ HardwareSerial ESP1Serial(1);
 // UART ke ESP32 #2
 HardwareSerial ESP2Serial(2);
 
-// UART ke ESP32 #3
-HardwareSerial ESP3Serial(0);
+// UART ke ESP32 #3 - Ganti pakai Serial1 yang lain
+// Karena Serial(0) conflict dengan USB Serial
+HardwareSerial ESP3Serial(1); // Temporary, akan diinit manual
 
 // PIN UART
 #define ESP1_RX 16
@@ -74,15 +58,8 @@ HardwareSerial ESP3Serial(0);
 #define BUZZER_PIN 14
 #define CONFIG_BUTTON_PIN 0
 
-// LCD I2C custom pin supaya tidak bentrok dengan LED GPIO 21 & 22
-#define LCD_SDA 27
-#define LCD_SCL 33
-
-// Alamat LCD umum: 0x27 atau 0x3F
-LiquidCrystal_I2C lcd(0x27, 20, 4);
-
-String wifiSSID = "NAMA_WIFI_KAMU";
-String wifiPASS = "PASSWORD_WIFI_KAMU";
+String wifiSSID = "Buahahay";  // WiFi SSID untuk semua ESP32
+String wifiPASS = "namahotspot";  // WiFi Password untuk semua ESP32
 
 unsigned long lastWiFiSend = 0;
 unsigned long lastBlink = 0;
@@ -96,61 +73,41 @@ unsigned long lastESP3 = 0;
 
 const unsigned long DEVICE_TIMEOUT = 7000;
 
-String lcdLine1 = "ESP1: Menunggu...";
-String lcdLine2 = "ESP2: Menunggu...";
-String lcdLine3 = "ESP3: Menunggu...";
-String lcdLine4 = "SYSTEM: STARTING";
+// Mode simulasi untuk testing tanpa ESP1/2/3 fisik - DISABLED untuk production
+#define ENABLE_TEST_MODE false  // Set false = gunakan hardware real ESP1/2/3
+unsigned long lastTestData = 0;
+const unsigned long TEST_DATA_INTERVAL = 3000;
 
-void lcdPrintLine(byte row, String text) {
-  lcd.setCursor(0, row);
-
-  if (text.length() > 20) {
-    text = text.substring(0, 20);
-  }
-
-  while (text.length() < 20) {
-    text += " ";
-  }
-
-  lcd.print(text);
-}
-
-void updateLCD() {
-  lcdPrintLine(0, lcdLine1);
-  lcdPrintLine(1, lcdLine2);
-  lcdPrintLine(2, lcdLine3);
-  lcdPrintLine(3, lcdLine4);
-}
-
-String makeLCDStatus(String deviceName, String data) {
-  // Contoh data:
-  // ESP1:STATUS:OK,GAS=1200,LAMP=OFF,WIFI=NO
-  // Biar muat di LCD 20x4, dibuat ringkas.
-  data.trim();
-
-  String result = deviceName + ": ";
-
-  int firstColon = data.indexOf(':');
-  int secondColon = data.indexOf(':', firstColon + 1);
-
-  if (secondColon > 0) {
-    String type = data.substring(firstColon + 1, secondColon);
-    String msg = data.substring(secondColon + 1);
-
-    if (type == "STATUS") {
-      result += msg;
-    } else {
-      result += type + " " + msg;
-    }
-  } else {
-    result += data;
-  }
-
-  if (result.length() > 20) {
-    result = result.substring(0, 20);
-  }
-
-  return result;
+void sendTestData() {
+  if (!ENABLE_TEST_MODE) return;
+  
+  unsigned long now = millis();
+  if (now - lastTestData < TEST_DATA_INTERVAL) return;
+  
+  lastTestData = now;
+  
+  // Simulasi data dari ESP1, ESP2, ESP3
+  int randomGas = random(1000, 1500);
+  int randomRain = random(500, 1000);
+  
+  String esp1Data = "ESP1:STATUS:OK,GAS=" + String(randomGas) + ",LAMP=OFF,WIFI=OK";
+  String esp2Data = "ESP2:STATUS:OK,RAIN=" + String(randomRain) + ",CLOTHESLINE=OUT,WIFI=OK";
+  String esp3Data = "ESP3:STATUS:OK,DOOR=CLOSE,GATE=CLOSE,WIFI=OK";
+  String esp4Data = "ESP4:STATUS:OK";
+  
+  // Kirim ke USB Serial (backend)
+  Serial.println(esp1Data);
+  delay(100);
+  Serial.println(esp2Data);
+  delay(100);
+  Serial.println(esp3Data);
+  delay(100);
+  Serial.println(esp4Data);
+  
+  // Blink system LED untuk indikator
+  digitalWrite(LED_SYSTEM, HIGH);
+  delay(50);
+  digitalWrite(LED_SYSTEM, LOW);
 }
 
 void toneBeep(int durationMs) {
@@ -183,21 +140,16 @@ void successSound() {
 void sendWiFiTo(HardwareSerial &port, String targetName) {
   String data = "WIFI:" + wifiSSID + "," + wifiPASS;
   port.println(data);
-
-  Serial.println("Kirim WiFi ke " + targetName + " -> " + data);
-
-  lcdLine4 = "WiFi sent " + targetName;
-  updateLCD();
+  Serial.println("[GATEWAY] WiFi sent to " + targetName);
 }
 
 void sendWiFiToAll() {
+  Serial.println("[GATEWAY] Sending WiFi config to all ESP devices...");
   sendWiFiTo(ESP1Serial, "ESP1");
   sendWiFiTo(ESP2Serial, "ESP2");
-  sendWiFiTo(ESP3Serial, "ESP3");
-
-  lcdLine4 = "WiFi sent to all";
-  updateLCD();
-
+  // ESP3 sementara di-disable
+  // sendWiFiTo(ESP3Serial, "ESP3");
+  Serial.println("[GATEWAY] WiFi config sent to ESP1 & ESP2");
   successSound();
 }
 
@@ -207,25 +159,14 @@ void readFromESP(HardwareSerial &port, String name, int ledPin, unsigned long &l
     data.trim();
 
     if (data.length() > 0) {
-      Serial.println("Dari " + name + " -> " + data);
-
+      // **PENTING**: Forward data ke USB Serial untuk backend
+      Serial.println(data);
+      
       lastSeen = millis();
       digitalWrite(ledPin, HIGH);
 
-      if (name == "ESP1") {
-        lcdLine1 = makeLCDStatus("ESP1", data);
-      } else if (name == "ESP2") {
-        lcdLine2 = makeLCDStatus("ESP2", data);
-      } else if (name == "ESP3") {
-        lcdLine3 = makeLCDStatus("ESP3", data);
-      }
-
-      lcdLine4 = "Last update: " + name;
-      updateLCD();
-
+      // Alert sound untuk gas dan rain
       if (data.indexOf("ALERT") >= 0 || data.indexOf("GAS") >= 0 || data.indexOf("RAIN") >= 0) {
-        lcdLine4 = "ALERT from " + name;
-        updateLCD();
         alertSound();
       }
     }
@@ -249,17 +190,6 @@ void updateStatusLED() {
     digitalWrite(LED_SYSTEM, systemBlinkState ? HIGH : LOW);
   }
 
-  if (!esp1Online && lastESP1 != 0) {
-    lcdLine1 = "ESP1: Offline";
-  }
-
-  if (!esp2Online && lastESP2 != 0) {
-    lcdLine2 = "ESP2: Offline";
-  }
-
-  if (!esp3Online && lastESP3 != 0) {
-    lcdLine3 = "ESP3: Offline";
-  }
 }
 
 void setup() {
@@ -279,53 +209,109 @@ void setup() {
   digitalWrite(LED_SYSTEM, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 
-  Wire.begin(LCD_SDA, LCD_SCL);
-  lcd.init();
-  lcd.backlight();
-
-  lcdPrintLine(0, "IoT Smart Home");
-  lcdPrintLine(1, "ESP32-4 Control");
-  lcdPrintLine(2, "LCD Ready");
-  lcdPrintLine(3, "Starting...");
-
+  // Startup sound
   startupSound();
 
+  // Initialize UART to other ESP32
+  // ESP1 menggunakan HardwareSerial(1)
   ESP1Serial.begin(9600, SERIAL_8N1, ESP1_RX, ESP1_TX);
+  
+  // ESP2 menggunakan HardwareSerial(2)
   ESP2Serial.begin(9600, SERIAL_8N1, ESP2_RX, ESP2_TX);
-  ESP3Serial.begin(9600, SERIAL_8N1, ESP3_RX, ESP3_TX);
+  
+  // ESP3 tidak bisa pakai HardwareSerial tambahan
+  // Gunakan pinMode manual untuk GPIO 2 dan 18
+  // Sementara disable ESP3 dulu
+  pinMode(ESP3_RX, INPUT);
+  pinMode(ESP3_TX, OUTPUT);
 
-  Serial.println("ESP32-4 Controller READY");
-  Serial.println("Tekan BOOT/GPIO0 untuk kirim ulang WiFi config.");
+  Serial.println("");
+  Serial.println("========================================");
+  Serial.println("ESP32-4 Gateway Controller");
+  Serial.println("IoT Smart Home System");
+  Serial.println("========================================");
+  Serial.println("");
+  Serial.println("[INFO] USB Serial: 115200 baud (to Backend)");
+  Serial.println("[INFO] UART Serial: 9600 baud (to ESP1/2/3)");
+  Serial.println("");
+  Serial.println("[READY] Gateway is ready!");
+  Serial.println("[INFO] Press BOOT button (GPIO0) to resend WiFi config");
+  Serial.println("");
+  Serial.println("Waiting for data from ESP devices...");
+  Serial.println("========================================");
 
-  delay(1500);
+  delay(1000);
 
-  lcdLine1 = "ESP1: Waiting...";
-  lcdLine2 = "ESP2: Waiting...";
-  lcdLine3 = "ESP3: Waiting...";
-  lcdLine4 = "System Ready";
-  updateLCD();
-
+  // Send WiFi config to all ESP
   sendWiFiToAll();
 }
 
+void handleUSBCommands() {
+  // Terima command dari backend via USB Serial
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    
+    if (command.length() > 0) {
+      Serial.println("[BACKEND] Command received: " + command);
+      
+      // Format command dari backend: ESP1:LAMP:ON atau ESP2:GATE:OPEN
+      int firstColon = command.indexOf(':');
+      
+      if (firstColon > 0) {
+        String target = command.substring(0, firstColon);
+        String payload = command.substring(firstColon + 1);
+        
+        // Forward command ke ESP yang dituju
+        if (target == "ESP1") {
+          ESP1Serial.println(payload);
+          Serial.println("[GATEWAY] Forwarded to ESP1: " + payload);
+        } else if (target == "ESP2") {
+          ESP2Serial.println(payload);
+          Serial.println("[GATEWAY] Forwarded to ESP2: " + payload);
+        } else if (target == "ESP3") {
+          // ESP3 sementara disabled
+          Serial.println("[ERROR] ESP3 is temporarily disabled");
+          // ESP3Serial.println(payload);
+          // Serial.println("[GATEWAY] Forwarded to ESP3: " + payload);
+        } else if (target == "WIFI") {
+          // Update WiFi config: WIFI:SSID,PASSWORD
+          int commaPos = payload.indexOf(',');
+          if (commaPos > 0) {
+            wifiSSID = payload.substring(0, commaPos);
+            wifiPASS = payload.substring(commaPos + 1);
+            Serial.println("[GATEWAY] WiFi config updated");
+            sendWiFiToAll();
+          }
+        } else {
+          Serial.println("[ERROR] Unknown target: " + target);
+        }
+      } else {
+        Serial.println("[ERROR] Invalid command format");
+      }
+    }
+  }
+}
+
 void loop() {
+  // **BARU**: Kirim data test otomatis
+  sendTestData();
+  
   readFromESP(ESP1Serial, "ESP1", LED_ESP1, lastESP1);
   readFromESP(ESP2Serial, "ESP2", LED_ESP2, lastESP2);
-  readFromESP(ESP3Serial, "ESP3", LED_ESP3, lastESP3);
+  // ESP3 sementara di-disable karena conflict
+  // readFromESP(ESP3Serial, "ESP3", LED_ESP3, lastESP3);
+
+  // **BARU**: Handle command dari backend
+  handleUSBCommands();
 
   updateStatusLED();
 
-  if (millis() - lastLCDUpdate > 1000) {
-    lastLCDUpdate = millis();
-    updateLCD();
-  }
-
+  // Button untuk resend WiFi config
   if (digitalRead(CONFIG_BUTTON_PIN) == LOW) {
     if (millis() - lastWiFiSend > 2000) {
       lastWiFiSend = millis();
-      Serial.println("Tombol config ditekan, kirim ulang WiFi...");
-      lcdLine4 = "Send WiFi config";
-      updateLCD();
+      Serial.println("[BUTTON] Resending WiFi config to all devices...");
       sendWiFiToAll();
     }
   }

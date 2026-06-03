@@ -166,6 +166,13 @@ void setup() {
   closeDoor();
   closeGate();
 
+  Serial.println("\n========================================");
+  Serial.println("ESP32 #3 - Door, Gate & RFID");
+  Serial.println("========================================");
+  Serial.println("[INFO] Serial 115200, UART 9600");
+  Serial.println("[READY] Waiting for WiFi config from ESP32-4...");
+  Serial.println("[INFO] RFID Ready - Scan card to open door");
+
   sendLog("SYSTEM", "READY");
 }
 

@@ -45,7 +45,7 @@ app.use((req, res, next) => {
 // Initialize services
 const serialService = new SerialService(
   process.env.SERIAL_PORT || 'COM3',
-  parseInt(process.env.SERIAL_BAUDRATE) || 9600,
+  parseInt(process.env.SERIAL_BAUDRATE) || 115200,
   process.env.USE_MOCK_SERIAL === 'true'
 );
 

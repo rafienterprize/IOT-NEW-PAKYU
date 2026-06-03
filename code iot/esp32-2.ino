@@ -96,6 +96,12 @@ void setup() {
   clotheslineServo.attach(CLOTHESLINE_SERVO_PIN);
   clotheslineServo.write(0);
 
+  Serial.println("\n========================================");
+  Serial.println("ESP32 #2 - Clothesline & Rain Sensor");
+  Serial.println("========================================");
+  Serial.println("[INFO] Serial 115200, UART 9600");
+  Serial.println("[READY] Waiting for WiFi config from ESP32-4...");
+
   sendLog("SYSTEM", "READY");
 }
 

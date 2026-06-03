@@ -94,6 +94,12 @@ void setup() {
   fishServo.attach(FISH_SERVO_PIN);
   fishServo.write(0);
 
+  Serial.println("\n========================================");
+  Serial.println("ESP32 #1 - Lamp & Gas Sensor");
+  Serial.println("========================================");
+  Serial.println("[INFO] Serial 115200, UART 9600");
+  Serial.println("[READY] Waiting for WiFi config from ESP32-4...");
+  
   sendLog("SYSTEM", "READY");
 }
 
