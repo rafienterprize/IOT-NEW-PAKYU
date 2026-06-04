@@ -19,7 +19,7 @@
  *   export const ESP4_BASE_URL = 'http://192.168.1.105';
  *   export const ESP4_BASE_URL = 'http://192.168.4.1';  // AP mode
  */
-export const ESP4_BASE_URL = 'http://192.168.1.100';
+export const ESP4_BASE_URL = 'http://10.110.25.248';
 
 // ---------------------------------------------------------------------------
 // Polling & timeout
